@@ -1,0 +1,75 @@
+use anyhow::Result;
+
+pub async fn execute(key: Option<String>) -> Result<()> {
+    // Non-interactive mode: just save the key
+    if let Some(key) = key {
+        crate::config::save_api_key(&key)?;
+        println!("API key saved to {}", crate::config::config_path()?.display());
+        println!("Key: {}", crate::config::mask_key(&key));
+        println!("\nYou're all set! Try these commands:");
+        println!("  coinpaprika-cli ticker btc-bitcoin");
+        println!("  coinpaprika-cli global");
+        println!("  coinpaprika-cli search ethereum");
+        return Ok(());
+    }
+
+    // Interactive mode
+    println!("┌─────────────────────────────────────────────────┐");
+    println!("│  Welcome to coinpaprika-cli!                    │");
+    println!("│  Crypto market data for developers & AI agents  │");
+    println!("└─────────────────────────────────────────────────┘");
+    println!();
+    println!("Do you have a CoinPaprika API key? (y/n)");
+
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    let input = input.trim().to_lowercase();
+
+    if input == "y" || input == "yes" {
+        println!("\nPaste your API key:");
+        let mut key = String::new();
+        std::io::stdin().read_line(&mut key)?;
+        let key = key.trim();
+
+        if key.is_empty() {
+            println!("No key entered. You can set it later with:");
+            println!("  coinpaprika-cli config set-key <YOUR_KEY>");
+            return Ok(());
+        }
+
+        // Validate by calling /key-info
+        println!("Validating key...");
+        let client = crate::client::ApiClient::new(Some(key.to_string()));
+        match client.coinpaprika_get::<serde_json::Value>("/key/info", &[]).await {
+            Ok(info) => {
+                crate::config::save_api_key(key)?;
+                let plan = info.get("plan")
+                    .and_then(|p| p.as_str())
+                    .unwrap_or("unknown");
+                println!("Key validated! Plan: {plan}");
+                println!("Saved to {}", crate::config::config_path()?.display());
+            }
+            Err(_) => {
+                println!("Could not validate key (it may still work). Saving anyway.");
+                crate::config::save_api_key(key)?;
+                println!("Saved to {}", crate::config::config_path()?.display());
+            }
+        }
+    } else {
+        println!();
+        println!("No problem! The free tier works without an API key.");
+        println!("You get community rate limits and access to most endpoints.");
+        println!();
+        println!("For historical data, ticker history, and higher limits:");
+        println!("  https://coinpaprika.com/api/pricing");
+    }
+
+    println!();
+    println!("You're all set! Try these commands:");
+    println!("  coinpaprika-cli ticker btc-bitcoin      # get Bitcoin price");
+    println!("  coinpaprika-cli global                   # market overview");
+    println!("  coinpaprika-cli search ethereum          # find coins");
+    println!();
+
+    Ok(())
+}

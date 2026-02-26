@@ -1,0 +1,35 @@
+[package]
+name = "coinpaprika-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CoinPaprika CLI — crypto market data from the terminal. 8,000+ coins, real-time prices, OHLCV, exchanges."
+license = "MIT"
+repository = "https://github.com/donbagger/coinpaprika-cli"
+keywords = ["coinpaprika", "cryptocurrency", "cli", "market-data", "bitcoin"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "coinpaprika-cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tabled = "0.17"
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "6"
+rustyline = "15"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
