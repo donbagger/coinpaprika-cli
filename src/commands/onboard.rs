@@ -1,11 +1,27 @@
 use anyhow::Result;
 
 pub async fn execute(key: Option<String>) -> Result<()> {
-    // Non-interactive mode: just save the key
+    // Non-interactive mode: validate then save the key
     if let Some(key) = key {
-        crate::config::save_api_key(&key)?;
-        println!("API key saved to {}", crate::config::config_path()?.display());
-        println!("Key: {}", crate::config::mask_key(&key));
+        println!("Validating key...");
+        let client = crate::client::ApiClient::new(Some(key.clone()));
+        match client.coinpaprika_get::<serde_json::Value>("/key/info", &[]).await {
+            Ok(info) => {
+                crate::config::save_api_key(&key)?;
+                let plan = info.get("plan")
+                    .and_then(|p| p.as_str())
+                    .unwrap_or("unknown");
+                println!("Key validated! Plan: {plan}");
+                println!("Saved to {}", crate::config::config_path()?.display());
+                println!("Key: {}", crate::config::mask_key(&key));
+            }
+            Err(_) => {
+                println!("Could not validate key (it may still work). Saving anyway.");
+                crate::config::save_api_key(&key)?;
+                println!("Saved to {}", crate::config::config_path()?.display());
+                println!("Key: {}", crate::config::mask_key(&key));
+            }
+        }
         println!("\nYou're all set! Try these commands:");
         println!("  coinpaprika-cli ticker btc-bitcoin");
         println!("  coinpaprika-cli global");

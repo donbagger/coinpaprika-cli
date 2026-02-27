@@ -11,7 +11,18 @@ pub struct KeyInfo {
     pub message: Option<String>,
 }
 
-pub async fn execute_key_info(client: &ApiClient, output: OutputFormat, raw: bool) -> Result<()> {
+pub async fn execute_key_info(client: &ApiClient, has_key: bool, output: OutputFormat, raw: bool) -> Result<()> {
+    if !has_key {
+        anyhow::bail!(
+            "No API key configured. The key-info command requires a paid API key.\n\n\
+             To get started:\n\
+             \x20 Get your key:   https://coinpaprika.com/api/pricing\n\
+             \x20 Set your key:   coinpaprika-cli config set-key <YOUR_KEY>\n\
+             \x20 Or use onboard: coinpaprika-cli onboard\n\n\
+             The free tier works without a key (20,000 calls/mo).\n\
+             Run coinpaprika-cli plans to see what's included."
+        );
+    }
     let info: KeyInfo = client.coinpaprika_get("/key/info", &[]).await?;
     match output {
         OutputFormat::Table => crate::output::api_management::print_key_info(&info),

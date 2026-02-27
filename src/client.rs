@@ -48,17 +48,27 @@ impl ApiClient {
             let body = resp.text().await.unwrap_or_default();
             match status {
                 StatusCode::PAYMENT_REQUIRED => {
-                    bail!(
-                        "This command requires a CoinPaprika API key (Starter plan or higher).\n\n\
-                         Get your API key:  https://coinpaprika.com/api/\n\
-                         Set your key:      coinpaprika-cli config set-key <YOUR_KEY>\n\n\
-                         Available plans:\n\
-                         \x20 Starter    — Historical data, ticker history, changelog\n\
-                         \x20 Business   — All Starter features + ID mappings, priority support\n\
-                         \x20 Enterprise — Custom limits, dedicated support\n\n\
-                         Already have a key? Make sure it's configured:\n\
-                         \x20 coinpaprika-cli config show"
-                    );
+                    let has_key = self.api_key.is_some();
+                    if has_key {
+                        bail!(
+                            "This endpoint requires a higher-tier plan.\n\n\
+                             Check your plan:   coinpaprika-cli key-info\n\
+                             Upgrade:           https://coinpaprika.com/api/pricing\n\n\
+                             Available plans:\n\
+                             \x20 Starter    — Historical data, ticker history, changelog\n\
+                             \x20 Business   — All Starter features + ID mappings, priority support\n\
+                             \x20 Enterprise — Custom limits, dedicated support"
+                        );
+                    } else {
+                        bail!(
+                            "Free tier rate limit reached, or this endpoint requires a paid plan.\n\n\
+                             If you just hit the rate limit (20,000 calls/mo), wait and retry.\n\
+                             Run coinpaprika-cli plans to see free tier limits.\n\n\
+                             To unlock higher limits and all endpoints:\n\
+                             \x20 Get your API key:  https://coinpaprika.com/api/pricing\n\
+                             \x20 Set your key:      coinpaprika-cli config set-key <YOUR_KEY>"
+                        );
+                    }
                 }
                 StatusCode::TOO_MANY_REQUESTS => {
                     bail!("Rate limit exceeded. Wait a moment and try again.");

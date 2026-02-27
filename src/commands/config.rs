@@ -1,5 +1,8 @@
 use anyhow::Result;
 use clap::Subcommand;
+use serde::Serialize;
+
+use crate::output::OutputFormat;
 
 #[derive(Subcommand)]
 pub enum ConfigCommand {
@@ -15,18 +18,44 @@ pub enum ConfigCommand {
     Reset,
 }
 
-pub async fn execute(cmd: ConfigCommand) -> Result<()> {
+#[derive(Debug, Serialize)]
+struct ConfigInfo {
+    config_file: String,
+    api_key: Option<String>,
+    key_source: String,
+    coinpaprika_url: String,
+}
+
+pub async fn execute(cmd: ConfigCommand, output: OutputFormat, raw: bool) -> Result<()> {
     match cmd {
         ConfigCommand::Show => {
             let key_source = crate::config::key_source(None);
             let api_key = crate::config::resolve_api_key(None);
             let config_path = crate::config::config_path()?;
 
-            crate::output::config::print_config_show(
-                &config_path.display().to_string(),
-                api_key.as_deref(),
-                key_source,
-            );
+            match output {
+                OutputFormat::Table => {
+                    crate::output::config::print_config_show(
+                        &config_path.display().to_string(),
+                        api_key.as_deref(),
+                        key_source,
+                    );
+                }
+                OutputFormat::Json => {
+                    let has_key = api_key.is_some();
+                    let info = ConfigInfo {
+                        config_file: config_path.display().to_string(),
+                        api_key: api_key.map(|k| crate::config::mask_key(&k)),
+                        key_source: key_source.to_string(),
+                        coinpaprika_url: if has_key {
+                            "https://api-pro.coinpaprika.com/v1".to_string()
+                        } else {
+                            "https://api.coinpaprika.com/v1".to_string()
+                        },
+                    };
+                    crate::output::print_json_wrapped(&info, crate::output::ResponseMeta::coinpaprika("/config"), raw)?;
+                }
+            }
         }
         ConfigCommand::SetKey { key } => {
             crate::config::save_api_key(&key)?;

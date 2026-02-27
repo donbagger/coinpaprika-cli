@@ -257,7 +257,7 @@ enum Commands {
         /// Quote currency ID (e.g., eth-ethereum, usd-us-dollars)
         quote_id: String,
         /// Amount to convert
-        #[arg(long, default_value = "1")]
+        #[arg(long, default_value = "1", allow_hyphen_values = true)]
         amount: f64,
     },
 
@@ -352,6 +352,7 @@ pub(crate) fn run(cli: Cli) -> std::pin::Pin<Box<dyn std::future::Future<Output 
 
 async fn run_inner(cli: Cli) -> anyhow::Result<()> {
     let api_key = config::resolve_api_key(cli.api_key.as_deref());
+    let has_api_key = api_key.is_some();
     let client = client::ApiClient::new(api_key);
     let output = cli.output;
     let raw = cli.raw;
@@ -389,17 +390,17 @@ async fn run_inner(cli: Cli) -> anyhow::Result<()> {
         Commands::ContractHistory { platform_id, address, start, end, interval, limit } => {
             commands::contracts::execute_history(&client, &platform_id, &address, &start, end.as_deref(), &interval, limit, output, raw).await
         }
-        Commands::KeyInfo => commands::api_management::execute_key_info(&client, output, raw).await,
+        Commands::KeyInfo => commands::api_management::execute_key_info(&client, has_api_key, output, raw).await,
         Commands::Mappings => commands::api_management::execute_mappings(&client, output, raw).await,
         Commands::Changelog { limit, page } => commands::api_management::execute_changelog(&client, limit, page, output, raw).await,
-        Commands::Config(cmd) => commands::config::execute(cmd).await,
+        Commands::Config(cmd) => commands::config::execute(cmd, output, raw).await,
         Commands::Status => commands::status::execute(&client, output, raw).await,
         Commands::Attribution => commands::attribution::execute(output, raw),
         Commands::Shell => {
             shell::run_shell().await;
             Ok(())
         }
-        Commands::Plans => commands::plans::execute(),
+        Commands::Plans => commands::plans::execute(output, raw),
         Commands::Onboard { key } => commands::onboard::execute(key).await,
     }
 }

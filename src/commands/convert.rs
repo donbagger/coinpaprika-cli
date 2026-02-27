@@ -17,6 +17,9 @@ pub struct ConvertResult {
 }
 
 pub async fn execute(client: &ApiClient, base_id: &str, quote_id: &str, amount: f64, output: OutputFormat, raw: bool) -> Result<()> {
+    if amount < 0.0 {
+        anyhow::bail!("--amount must be non-negative (got {amount})");
+    }
     let amount_str = amount.to_string();
     let result: ConvertResult = client.coinpaprika_get(
         "/price-converter",
