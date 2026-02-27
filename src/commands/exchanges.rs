@@ -60,10 +60,11 @@ pub struct ExchangeMarketQuote {
 }
 
 pub async fn execute_list(client: &ApiClient, limit: usize, quotes: &str, output: OutputFormat, raw: bool) -> Result<()> {
-    let exchanges: Vec<Exchange> = client.coinpaprika_get(
+    let mut exchanges: Vec<Exchange> = client.coinpaprika_get(
         "/exchanges",
         &[("quotes", quotes)],
     ).await?;
+    exchanges.sort_by_key(|e| e.adjusted_rank.unwrap_or(i64::MAX));
     let exchanges: Vec<Exchange> = exchanges.into_iter().take(limit).collect();
     match output {
         OutputFormat::Table => crate::output::exchanges::print_exchanges_table(&exchanges),
