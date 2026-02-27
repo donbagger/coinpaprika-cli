@@ -29,7 +29,7 @@ Priority: CLI flag > env var > config file.
 
 ## Rate limits & pricing
 
-- **Free tier:** no key needed, community rate limits
+- **Free tier:** 20,000 calls/mo, no key needed — run `coinpaprika-cli plans` for full details
 - **Starter/Business/Enterprise:** [coinpaprika.com/api/pricing](https://coinpaprika.com/api/pricing)
 
 ## All commands
@@ -66,6 +66,7 @@ Priority: CLI flag > env var > config file.
 | `config show` | Show config | `coinpaprika-cli config show` |
 | `config set-key` | Set API key | `coinpaprika-cli config set-key <KEY>` |
 | `config reset` | Delete config | `coinpaprika-cli config reset` |
+| `plans` | Free tier details & paid overview | `coinpaprika-cli plans` |
 | `status` | API health check | `coinpaprika-cli status` |
 | `attribution` | Attribution snippets | `coinpaprika-cli attribution` |
 | `onboard` | Setup wizard | `coinpaprika-cli onboard` |

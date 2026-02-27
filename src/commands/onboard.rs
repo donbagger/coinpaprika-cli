@@ -58,7 +58,9 @@ pub async fn execute(key: Option<String>) -> Result<()> {
     } else {
         println!();
         println!("No problem! The free tier works without an API key.");
-        println!("You get community rate limits and access to most endpoints.");
+        println!("20,000 calls/month, 25+ endpoints, 2,000 assets.");
+        println!();
+        println!("Run coinpaprika-cli plans to see exactly what's included.");
         println!();
         println!("For historical data, ticker history, and higher limits:");
         println!("  https://coinpaprika.com/api/pricing");

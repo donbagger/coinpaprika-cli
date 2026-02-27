@@ -15,9 +15,10 @@ use std::process::ExitCode;
     about = "coinpaprika-cli — Crypto market data for developers and AI agents",
     long_about = "coinpaprika-cli — Crypto market data for developers and AI agents\n\n\
                    8,000+ coins · Real-time prices · OHLCV · Exchanges · Market data\n\n\
-                   Free tier: no API key needed, community rate limits\n\
-                   Paid plans: historical data, higher limits, priority support\n\n\
+                   Free tier: 20,000 calls/mo, no API key needed\n\
+                   Paid plans: full history, 5-min intervals, higher limits\n\n\
                    Quick start:  coinpaprika-cli onboard\n\
+                   Free vs paid: coinpaprika-cli plans\n\
                    API docs:     https://api.coinpaprika.com\n\
                    Pricing:      https://coinpaprika.com/api/pricing"
 )]
@@ -334,6 +335,9 @@ enum Commands {
     /// Interactive shell mode (REPL)
     Shell,
 
+    /// Show free tier details and paid plan overview
+    Plans,
+
     /// Interactive setup wizard (configure API key)
     Onboard {
         /// API key to save (skips interactive prompts)
@@ -395,6 +399,7 @@ async fn run_inner(cli: Cli) -> anyhow::Result<()> {
             shell::run_shell().await;
             Ok(())
         }
+        Commands::Plans => commands::plans::execute(),
         Commands::Onboard { key } => commands::onboard::execute(key).await,
     }
 }
